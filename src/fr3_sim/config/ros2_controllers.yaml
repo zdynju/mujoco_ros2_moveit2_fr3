@@ -38,7 +38,7 @@ fr3_hand_controller:
   ros__parameters:
     joints:
       - fr3_finger_joint1
-      - fr3_finger_joint2
+      # - fr3_finger_joint2
     command_interfaces:
       - position
     state_interfaces:

@@ -99,9 +99,9 @@
       </body>
     </body>
   </worldbody>
-  <!-- <equality>
+  <equality>
     <joint joint1="fr3_finger_joint1" joint2="fr3_finger_joint2" polycoef="0 1 0 0 0"/>
-  </equality> -->
+  </equality>
   <actuator>
     <motor name="fr3_joint1" joint="fr3_joint1"/>
     <motor name="fr3_joint2" joint="fr3_joint2"/>
@@ -111,7 +111,7 @@
     <motor name="fr3_joint6" joint="fr3_joint6"/>
     <motor name="fr3_joint7" joint="fr3_joint7"/>
     <motor name="fr3_finger_joint1" joint="fr3_finger_joint1"/>
-    <motor name="fr3_finger_joint2" joint="fr3_finger_joint2"/>
+    <!-- <motor name="fr3_finger_joint2" joint="fr3_finger_joint2"/> -->
   </actuator>
 
 </mujoco>
