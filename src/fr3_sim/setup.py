@@ -29,6 +29,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'mujoco_obstacle_pub = fr3_sim.mujoco_obstacle_pub:main',
         ],
     },
 )

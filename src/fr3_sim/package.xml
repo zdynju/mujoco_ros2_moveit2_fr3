@@ -13,7 +13,7 @@
   <depend>mujoco_ros2_control</depend>
   <depend>ros2_control</depend>
   <depend>ros2_controllers</depend>
-
+  <depend>mujoco_py</depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
