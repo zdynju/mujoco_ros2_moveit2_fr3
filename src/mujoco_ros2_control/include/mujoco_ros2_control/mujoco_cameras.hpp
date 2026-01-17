@@ -1,36 +1,38 @@
-// Copyright (c) 2025 Erik Holum
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+/**
+ * Copyright (c) 2025, United States Government, as represented by the
+ * Administrator of the National Aeronautics and Space Administration.
+ *
+ * All rights reserved.
+ *
+ * This software is licensed under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 
 #pragma once
 
-#include <string>
+#include <atomic>
+#include <mutex>
+#include <thread>
 #include <vector>
 
-#include "GLFW/glfw3.h"
-#include "mujoco/mujoco.h"
-#include "rclcpp/rclcpp.hpp"
+#include <GLFW/glfw3.h>
+#include <mujoco/mujoco.h>
 
-#include "rclcpp/node.hpp"
-#include "rclcpp/publisher.hpp"
-#include "sensor_msgs/msg/camera_info.hpp"
-#include "sensor_msgs/msg/image.hpp"
+#include <hardware_interface/hardware_info.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/publisher.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <sensor_msgs/msg/image.hpp>
 
 namespace mujoco_ros2_control
 {
@@ -42,6 +44,10 @@ struct CameraData
 
   std::string name;
   std::string frame_name;
+  std::string info_topic;
+  std::string image_topic;
+  std::string depth_topic;
+
   uint32_t width;
   uint32_t height;
 
@@ -58,19 +64,64 @@ struct CameraData
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub;
 };
 
+/**
+ * @brief Wraps Mujoco cameras for publishing ROS 2 RGB-D streams.
+ */
 class MujocoCameras
 {
 public:
-  explicit MujocoCameras(rclcpp::Node::SharedPtr &node);
+  /**
+   * @brief Constructs a new MujocoCameras wrapper object.
+   *
+   * @param node Will be used to construct image publishers
+   * @param sim_mutex Provides synchronized access to the mujoco_data object for rendering
+   * @param mujoco_data Mujoco data for the simulation
+   * @param mujoco_model Mujoco model for the simulation
+   * @param camera_publish_rate The rate to publish all camera images, for now all images are published at the same rate.
+   */
+  explicit MujocoCameras(rclcpp::Node::SharedPtr& node, std::recursive_mutex* sim_mutex, mjData* mujoco_data,
+                         mjModel* mujoco_model, double camera_publish_rate);
 
-  void init(mjModel *mujoco_model);
-  void update(mjModel *mujoco_model, mjData *mujoco_data);
+  /**
+   * @brief Starts the image processing thread in the background.
+   *
+   * The background thread will initialize its own offscreen glfw context for rendering images that is
+   * separate from the Simulate applications, as the context must be in the running thread.
+   */
+  void init();
+
+  /**
+   * @brief Stops the camera processing thread and closes the relevant objects, call before shutdown.
+   */
   void close();
 
+  /**
+   * @brief Parses camera information from the mujoco model.
+   */
+  void register_cameras(const hardware_interface::HardwareInfo& hardware_info);
+
 private:
-  void register_cameras(const mjModel *mujoco_model);
+  /**
+   * @brief Initializes the rendering context and starts processing.
+   */
+  void update_loop();
+
+  /**
+   * @brief Updates the camera images and publishes info, images, and depth maps.
+   */
+  void update();
 
   rclcpp::Node::SharedPtr node_;
+
+  // Ensures locked access to simulation data for rendering.
+  std::recursive_mutex* sim_mutex_{ nullptr };
+
+  mjData* mj_data_;
+  mjModel* mj_model_;
+  mjData* mj_camera_data_;
+
+  // Image publishing rate
+  double camera_publish_rate_;
 
   // Rendering options for the cameras, currently hard coded to defaults
   mjvOption mjv_opt_;
@@ -79,6 +130,10 @@ private:
 
   // Containers for camera data and ROS constructs
   std::vector<CameraData> cameras_;
+
+  // Camera processing thread
+  std::thread rendering_thread_;
+  std::atomic_bool publish_images_;
 };
 
 }  // namespace mujoco_ros2_control

@@ -30,9 +30,9 @@ fr3_arm_controller:
     state_interfaces:
       - position
       - velocity
-    # 限制 MoveIt 规划失败时的容差
-    state_publish_rate: 100.0
-    action_monitor_rate: 20.0
+    # # 限制 MoveIt 规划失败时的容差
+    # state_publish_rate: 100.0
+    # action_monitor_rate: 20.0
 
 fr3_hand_controller:
   ros__parameters:

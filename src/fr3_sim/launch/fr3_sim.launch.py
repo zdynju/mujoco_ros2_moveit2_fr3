@@ -63,12 +63,12 @@ def generate_launch_description():
     # 这个节点既跑物理引擎，又作为 Controller Manager
     node_mujoco = Node(
         package='mujoco_ros2_control',
-        executable='mujoco_ros2_control',
+        executable='ros2_control_node',
         output='both',
         parameters=[
             robot_description,
             {'use_sim_time': use_sim_time},
-            {'mujoco_model_path': mujoco_scene_file}, # 传入 scene.xml 路径
+            # {'mujoco_model_path': mujoco_scene_file}, # 传入 scene.xml 路径
             controller_config  # 传入控制器参数
         ]
     )
@@ -118,26 +118,26 @@ def generate_launch_description():
     )
 
 
-    auto_home_command = TimerAction(
-    period=3.0, # 等待 3 秒，确保控制器已经启动
-    actions=[
-        ExecuteProcess(
-            cmd=[
-                'ros2', 'topic', 'pub', '--once',
-                '/fr3_arm_controller/joint_trajectory',
-                'trajectory_msgs/msg/JointTrajectory',
-                '{header: {frame_id: world}, joint_names: [fr3_joint1, fr3_joint2, fr3_joint3, fr3_joint4, fr3_joint5, fr3_joint6, fr3_joint7], points: [{positions: [0.0, -0.785, 0.0, -2.356, 0.0, 1.57, 0.785], time_from_start: {sec: 2, nanosec: 0}}]}'
-            ],
-            output='screen'
-        )
-    ]
-)
+#     auto_home_command = TimerAction(
+#     period=3.0, # 等待 3 秒，确保控制器已经启动
+#     actions=[
+#         ExecuteProcess(
+#             cmd=[
+#                 'ros2', 'topic', 'pub', '--once',
+#                 '/fr3_arm_controller/joint_trajectory',
+#                 'trajectory_msgs/msg/JointTrajectory',
+#                 '{header: {frame_id: world}, joint_names: [fr3_joint1, fr3_joint2, fr3_joint3, fr3_joint4, fr3_joint5, fr3_joint6, fr3_joint7], points: [{positions: [0.0, -0.785, 0.0, -2.356, 0.0, 1.57, 0.785], time_from_start: {sec: 2, nanosec: 0}}]}'
+#             ],
+#             output='screen'
+#         )
+#     ]
+# )
     return LaunchDescription([
         declare_use_sim_time,
         node_robot_state_publisher,
         node_mujoco,
         spawn_joint_state_broadcaster,
         delay_arm_controller_spawner,
-        auto_home_command
+        # auto_home_command
         # node_rviz
     ])
