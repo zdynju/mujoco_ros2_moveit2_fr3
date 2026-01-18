@@ -30,9 +30,7 @@ fr3_arm_controller:
     state_interfaces:
       - position
       - velocity
-    # # 限制 MoveIt 规划失败时的容差
-    # state_publish_rate: 100.0
-    # action_monitor_rate: 20.0
+
 
 fr3_hand_controller:
   ros__parameters:
@@ -45,13 +43,3 @@ fr3_hand_controller:
       - position
       - velocity
 
-    # # 👇 关键修改 2: 加上宽容度配置 (解决 Goal Rejected)
-    # constraints:
-    #   goal_time: 2.0               # 允许晚 2 秒到达
-    #   stopped_velocity_tolerance: 0.05 # 允许停下时还有点速度
-    #   fr3_finger_joint1:
-    #     trajectory: 0.05           # 轨迹允许 0.05弧度/米的误差
-    #     goal: 0.05                 # 终点允许 0.05弧度/米的误差
-    #   fr3_finger_joint2:
-    #     trajectory: 0.05
-    #     goal: 0.05
