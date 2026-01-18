@@ -9,6 +9,7 @@ import math
 import time
 from ament_index_python.packages import get_package_share_directory
 import os
+import  yaml
 def plan_and_execute(
     robot,
     planning_component,
@@ -36,8 +37,9 @@ def plan_and_execute(
         
         if execute:
             logger.info("正在执行轨迹...")
+            group_name = planning_component.planning_group_name
             # MoveItPy 的 execute 需要传入 trajectory 对象
-            robot.execute(plan_result.trajectory, controllers=[])
+            robot.execute(group_name, plan_result.trajectory, blocking=True)
             logger.info("执行完成")
         return True
     else:
@@ -144,49 +146,25 @@ def grasp_sequence(moveit_py_instance, target_pose):
 
 def main():
     rclpy.init()
+    logger = rclpy.logging.get_logger("moveit_py")
+    fr3 = MoveItPy(node_name="moveit_py")
+    logger.info("MoveItPy instance created")
 
-    # 假设你的 MoveIt 配置包叫 fr3_moveit_config
-    try:
-        # 2. 使用自动加载，移除冗余路径
-        # 只要你的包结构是标准的 (config/ 文件夹下有对应文件)，这样写就够了
-        moveit_config = MoveItConfigsBuilder("fr3", package_name="fr3_moveit_config") \
-            .robot_description(file_path="config/fr3.urdf.xacro") \
-            .robot_description_semantic(file_path="config/fr3.srdf") \
-            .planning_pipelines(
-                pipelines=["ompl", "pilz_industrial_motion_planner"], # 建议加上 pilz，处理直线运动很方便
-                default_planning_pipeline="ompl"
-            ) \
-            .to_moveit_configs()
 
-        # 检查是否成功加载 (可选，打印调试)
-        print(moveit_config.to_dict()) 
-        
-    except Exception as e:
-        print(f"❌ 配置文件加载失败: {e}")
-        return
-    # # 传入 config_dict
-    fr3 = MoveItPy(node_name="moveit_py", config_dict=moveit_config.to_dict())
+    arm = fr3.get_planning_component("fr3_arm")
+    pose_goal = PoseStamped()
+    pose_goal.header.frame_id = "base"  # 根据你的机器人基座 frame 修改
+    pose_goal.pose.orientation.w = 0.0
+    pose_goal.pose.orientation.x = 1.0
+    pose_goal.pose.position.x = 0.125
+    pose_goal.pose.position.y = -0.25
+    pose_goal.pose.position.z = 0.5
 
-    # ---------------------------------------------------------
-    # 2. 设置目标点 (来自 MuJoCo)
-    # ---------------------------------------------------------
-    target_pose = PoseStamped()
-    target_pose.header.frame_id = "base" # 建议用 world，对应我们之前修好的 TF 树
-    target_pose.pose.position.x = 0.125    # 这里的坐标最好稍微改一下，MuJoCo的 0.125 可能在底座里面
-    target_pose.pose.position.y = -0.25
-    target_pose.pose.position.z = 0.2     # 抬高一点测试
-    
-    # 姿态：这取决于你的夹爪坐标系定义。
-    # 通常 (1, 0, 0, 0) 是绕 X 轴 180 度，即指尖向下
-    target_pose.pose.orientation.x = 1.0
-    target_pose.pose.orientation.y = 0.0
-    target_pose.pose.orientation.z = 0.0
-    target_pose.pose.orientation.w = 0.0
+    arm.set_start_state_to_current_state()
 
-    # ---------------------------------------------------------
-    # 3. 执行
-    # ---------------------------------------------------------
-    grasp_sequence(fr3, target_pose)
+    arm.set_goal_state(pose_stamped_msg=pose_goal, pose_link="fr3_link8")
+    plan_and_execute(fr3, arm, logger)
+
 
     rclpy.shutdown()
 

@@ -35,6 +35,7 @@ def generate_launch_description():
             pipelines=["ompl"] 
         ) \
         .to_moveit_configs()
+    print(moveit_config.to_dict())
     # 2. 启动 Move Group (大脑)
     run_move_group_node = Node(
         package="moveit_ros_move_group",
