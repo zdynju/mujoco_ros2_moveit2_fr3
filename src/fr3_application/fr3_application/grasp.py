@@ -77,7 +77,7 @@ def main():
     pose_goal.pose.orientation.z = q[2]
     pose_goal.pose.orientation.w = q[3]
     pose_goal.pose.position.x = 0.5
-    pose_goal.pose.position.y = 0.0
+    pose_goal.pose.position.y = 0.1
     pose_goal.pose.position.z = 0.5
 
     arm.set_goal_state(pose_stamped_msg=pose_goal, pose_link="fr3_link8")

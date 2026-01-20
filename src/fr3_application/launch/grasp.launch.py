@@ -24,13 +24,13 @@ def generate_launch_description():
     )
 
 
-    # ------------------------------------------------------------
+    # ------------------------------------------------------------s
     # 2. 启动你的 MoveItPy 节点
     # ------------------------------------------------------------
     grasp_node = Node(
         package="fr3_application",
         executable="grasp",          # setup.py 里的 entry point
-        name="grasp_node",
+        name="moveit_py",
         output="screen",
         parameters=[
             moveit_config.to_dict(),

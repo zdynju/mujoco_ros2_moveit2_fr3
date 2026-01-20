@@ -61,7 +61,6 @@ def generate_launch_description():
         parameters=[
             robot_description,
             {'use_sim_time': use_sim_time},
-            # {'mujoco_model_path': mujoco_scene_file}, # 传入 scene.xml 路径
             controller_config  # 传入控制器参数
         ]
     )
