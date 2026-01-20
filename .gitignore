@@ -12,3 +12,7 @@ __pycache__/
 .idea/
 
 token
+
+MUJOCO_LOG.TXT
+
+*

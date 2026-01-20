@@ -31,6 +31,13 @@
             
             <param name="pids_config_file">$(find fr3_sim)/config/pid_gains.yaml</param>
         </hardware>
+          <!-- For cameras, the sensor name _must_ match the camera name in the MJCF -->
+        <sensor name="camera1">
+            <param name="frame_name">camera1_mujoco_frame</param>
+            <param name="info_topic">/camera1/color/camera_info</param>
+            <param name="image_topic">/camera1/color/image_raw</param>
+            <param name="depth_topic">/camera1/aligned_depth_to_color/image_raw</param>
+        </sensor>
 
         <xacro:macro name="configure_joint" params="name ip:=0">
             <joint name="${name}">

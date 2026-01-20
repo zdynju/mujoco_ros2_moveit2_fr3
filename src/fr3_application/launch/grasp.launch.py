@@ -13,16 +13,16 @@ def generate_launch_description():
 
     moveit_config = (
         MoveItConfigsBuilder("fr3", package_name=moveit_pkg_name)
-        .robot_description(file_path="config/fr3.urdf")
-        .robot_description_semantic(file_path="config/fr3.srdf")
         .trajectory_execution(file_path="config/moveit_controllers.yaml")
         .joint_limits(file_path="config/joint_limits.yaml")
         .robot_description_kinematics(file_path="config/kinematics.yaml")
         .moveit_cpp(
             file_path=get_package_share_directory("fr3_application")+"/config/moveit_cpp.yaml"
         )
+        .sensors_3d(file_path ="config/sensors_3d.yaml")
         .to_moveit_configs()
     )
+
 
     # ------------------------------------------------------------
     # 2. 启动你的 MoveItPy 节点
@@ -38,7 +38,15 @@ def generate_launch_description():
         ],
     )
 
-
+    # run_move_group_node = Node(
+    #     package="moveit_ros_move_group",
+    #     executable="move_group",
+    #     output="screen",
+    #     parameters=[
+    #         moveit_config.to_dict(), 
+    #         {"use_sim_time": True},  
+    #     ],
+    # )
     run_rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -47,14 +55,12 @@ def generate_launch_description():
         arguments=["-d", os.path.join(
             moveit_config.package_path, "rviz", "rviz.rviz")],
         parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.planning_pipelines,
-            moveit_config.robot_description_kinematics,
+            moveit_config.to_dict(),
             {"use_sim_time": True}, # 同上，保持时间同步
         ],
     )
     return LaunchDescription([
         grasp_node,
+        # run_move_group_node,
         run_rviz_node
     ])

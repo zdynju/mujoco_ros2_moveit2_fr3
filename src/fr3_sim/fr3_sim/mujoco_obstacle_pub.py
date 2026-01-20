@@ -11,7 +11,8 @@ from rcl_interfaces.msg import ParameterType
 class MujocoObstaclesPublisher(Node):
     def __init__(self):
         super().__init__('mujoco_obstacles_pub')
-
+        self.pub_count = 0
+        self.max_pub_count = 10
         self.declare_parameter('mujoco_model_path', '')
         # 1. 声明 obstacles 参数，明确告诉它是字符串数组
         self.declare_parameter(
@@ -51,8 +52,8 @@ class MujocoObstaclesPublisher(Node):
             self.model = mujoco.MjModel.from_xml_path(model_path)
             self.data = mujoco.MjData(self.model)
             
-            # 执行一次正向运动学计算，确保 xpos 和 xmat 是基于 qpos0 (默认位置) 计算的
-            mujoco.mj_kinematics(self.model, self.data)
+            mujoco.mj_forward(self.model, self.data)
+
         except Exception as e:
             self.get_logger().error(f"Failed to load MuJoCo model: {e}")
             return
@@ -65,82 +66,88 @@ class MujocoObstaclesPublisher(Node):
 
     def publish_scene_objects(self):
         """统一处理障碍物和目标物"""
+        if self.pub_count >= self.max_pub_count:
+            self.get_logger().info("已达到发布次数限制，停止发布。")
+            self.timer.destroy()  # 销毁定时器，不再执行
+            return
         # 发布障碍物
         self._process_list(self.obstacle_names, is_target=False)
         # 发布目标物
         self._process_list(self.target_names, is_target=True)
-
-    def _process_list(self, geom_names, is_target):
-        for name in geom_names:
-            msg = self._create_collision_object(name)
+        self.pub_count += 1
+    def _process_list(self, body_names, is_target):
+        for name in body_names:
+            msg = self._create_collision_object_from_body(name)
             if msg:
                 self.pub.publish(msg)
                 role = "TARGET" if is_target else "OBSTACLE"
                 # debug 日志，防止刷屏
                 self.get_logger().debug(f"Published {role}: {name}")
 
-    def _create_collision_object(self, geom_name):
+    def _create_collision_object_from_body(self, body_name):
         try:
-            # 获取 geom 的 ID
-            # 参数顺序为：模型对象，对象类型枚举，对象名字
-            # 核心修正：使用 mjOBJ_GEOM 而不是 mjtGEOM
-            gid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
+            # 1. 获取 Body ID
+            bid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, body_name)
         except ValueError:
-            self.get_logger().warn(f"Geom '{geom_name}' not found in MuJoCo model!")
+            self.get_logger().warn(f"Body '{body_name}' not found!")
             return None
 
-        # 获取位置和旋转
-        # 注意：如果仿真是在运行的，这里应该连接仿真器的 pose 话题，
-        # 但如果是静态场景加载，读取 self.data 就足够了 (基于 mj_kinematics)
-        pos = self.data.geom_xpos[gid]
-        mat = self.data.geom_xmat[gid].reshape(3, 3)
-        quat = self.rotmat_to_quaternion(mat)
-
-        # 获取类型和尺寸
-        g_type = self.model.geom_type[gid] # 2: sphere, 3: capsule, 5: cylinder, 6: box
-        g_size = self.model.geom_size[gid] # 根据类型含义不同
-
-        # 构建 ROS 消息
         msg = CollisionObject()
-        msg.id = geom_name  
+        msg.id = body_name # 一个 Body 对应一个 MoveIt ID
         msg.header.frame_id = self.frame_id
         msg.operation = CollisionObject.ADD
 
-        primitive = SolidPrimitive()
-        
-        #  类型与尺寸自动转换
-        if g_type == 6: # BOX
-            primitive.type = SolidPrimitive.BOX
-            # MuJoCo size 是半长 (half-extents)，ROS 需要全长
-            primitive.dimensions = [g_size[0]*2, g_size[1]*2, g_size[2]*2]
-        
-        elif g_type == 2: # SPHERE
-            primitive.type = SolidPrimitive.SPHERE
-            primitive.dimensions = [g_size[0]] # radius
-        
-        elif g_type == 5: # CYLINDER
-            primitive.type = SolidPrimitive.CYLINDER
-            primitive.dimensions = [g_size[1]*2, g_size[0]] # [height, radius] 注意顺序！
+        # 2. 遍历属于该 Body 的所有 Geom
+        # geomadr 是该 Body 第一个 geom 的索引，geomnb 是 geom 的数量
+        first_gid = self.model.body_geomadr[bid]
+        geom_count = self.model.body_geomnum[bid]
+
+        for i in range(geom_count):
+            gid = first_gid + i
             
-        else:
-            self.get_logger().warn(f"Geom {geom_name} type {g_type} not supported yet (Mesh/Plane/Capsule).")
-            return None
+            # 获取该 Geom 相对于 Body 的位置和旋转 (或使用全局坐标)
+            # 建议使用全局坐标 geom_xpos，因为 MoveIt 的 CollisionObject 默认相对于 frame_id
+            pos = self.data.geom_xpos[gid]
+            mat = self.data.geom_xmat[gid].reshape(3, 3)
+            quat = self.rotmat_to_quaternion(mat)
 
-        msg.primitives.append(primitive)
+            g_type = self.model.geom_type[gid]
+            g_size = self.model.geom_size[gid]
 
-        pose = Pose()
-        pose.position.x = float(pos[0])
-        pose.position.y = float(pos[1])
-        pose.position.z = float(pos[2])
-        pose.orientation.x = quat[0]
-        pose.orientation.y = quat[1]
-        pose.orientation.z = quat[2]
-        pose.orientation.w = quat[3]
+            primitive = SolidPrimitive()
+        
+            #  类型与尺寸自动转换
+            if g_type == 6: # BOX
+                primitive.type = SolidPrimitive.BOX
+                # MuJoCo size 是半长 (half-extents)，ROS 需要全长
+                primitive.dimensions = [g_size[0]*2, g_size[1]*2, g_size[2]*2]
+            
+            elif g_type == 2: # SPHERE
+                primitive.type = SolidPrimitive.SPHERE
+                primitive.dimensions = [g_size[0]] # radius
+            
+            elif g_type == 5: # CYLINDER
+                primitive.type = SolidPrimitive.CYLINDER
+                primitive.dimensions = [g_size[1]*2, g_size[0]] # [height, radius] 注意顺序！
+                
+            else:
+                self.get_logger().warn(f"Geom {body_name} type {g_type} not supported yet (Mesh/Plane/Capsule).")
+                return None
 
-        msg.primitive_poses.append(pose)
+            msg.primitives.append(primitive)
+
+            pose = Pose()
+            pose.position.x = float(pos[0])
+            pose.position.y = float(pos[1])
+            pose.position.z = float(pos[2])
+            pose.orientation.x = quat[0]
+            pose.orientation.y = quat[1]
+            pose.orientation.z = quat[2]
+            pose.orientation.w = quat[3]
+
+            msg.primitive_poses.append(pose)
         msg.header.stamp = self.get_clock().now().to_msg()
-        # 在 _create_collision_object 函数里
-        self.get_logger().info(f"OBJECT CHECK: name={geom_name}, gid={gid}, pos={pos}")
+        self.get_logger().info(f"OBJECT CHECK: name={body_name}, bid={bid}, pos={pos}")
         return msg
 
     @staticmethod

@@ -10,21 +10,14 @@ from launch_ros.substitutions import FindPackageShare
 from launch.actions import ExecuteProcess, TimerAction
 
 def generate_launch_description():
-    # 1. 定义一些方便的变量
     package_name = 'fr3_sim'
     
     # 获取参数
     use_sim_time = LaunchConfiguration('use_sim_time')
     
-    # 2. 声明路径
     # 模型文件 (URDF/Xacro)
     xacro_file = PathJoinSubstitution([
         FindPackageShare(package_name), 'urdf', 'fr3.urdf.xacro'
-    ])
-    
-    # MuJoCo 场景文件 (XML)
-    mujoco_scene_file = PathJoinSubstitution([
-        FindPackageShare(package_name), 'config', 'fr3_mujoco.xml'
     ])
 
     # 控制器配置文件 (YAML)
@@ -106,30 +99,29 @@ def generate_launch_description():
         )
     )
 
-# E. 启动障碍物发布节点
-    obstacle_add_node = Node(
-        package='fr3_sim',
-        executable='mujoco_obstacle_pub', # 必须和 setup.py console_scripts 里的名字一样
-        name='mujoco_obstacle_pub', # 给节点起个好听的名字
-        output='screen',
-        parameters=[{
-            'mujoco_model_path': mujoco_scene_file, 
+# # E. 启动障碍物发布节点
+#     obstacle_add_node = Node(
+#         package='fr3_sim',
+#         executable='mujoco_obstacle_pub', # 必须和 setup.py console_scripts 里的名字一样
+#         name='mujoco_obstacle_pub', # 给节点起个好听的名字
+#         output='screen',
+#         parameters=[{
+#             'mujoco_model_path': mujoco_scene_file, 
             
-            'obstacles': ['obstacle_geom'],
+#             'obstacles': ["obstacle","table"],
             
-            # 目标物 id (对应 XML 里的 geom name)
-            'targets': ['object_geom'],
+#             'targets': ['hoop_object'],
             
-            'frame_id': 'base',
-            'update_rate': 1.0
-        }]
-    )
+#             'frame_id': 'base',
+#             'update_rate': 1.0
+#         }]
+#     )
     return LaunchDescription([
         declare_use_sim_time,
         node_robot_state_publisher,
         node_mujoco,
         spawn_joint_state_broadcaster,
         delay_arm_controller_spawner,
-        obstacle_add_node
+        # obstacle_add_node
         # node_rviz
     ])
