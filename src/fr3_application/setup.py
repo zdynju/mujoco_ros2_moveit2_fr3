@@ -30,7 +30,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            "grasp = fr3_application.grasp:main", 
+            "fr3grasp = fr3_application.fr3grasp:main", 
             "pointcloud = fr3_application.pointcloud:main"
         ],
     },

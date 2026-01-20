@@ -13,7 +13,7 @@ def generate_launch_description():
         get_package_share_directory("franka_description"),
         "robots", "fr3", "fr3.urdf.xacro"
     )
-    print("hello")
+
     moveit_config = MoveItConfigsBuilder("fr3", package_name=moveit_pkg_name) \
         .robot_description(
             file_path=urdf_file_path
@@ -22,6 +22,7 @@ def generate_launch_description():
         .trajectory_execution(file_path="config/moveit_controllers.yaml") \
         .joint_limits(file_path="config/joint_limits.yaml") \
         .robot_description_kinematics(file_path="config/kinematics.yaml") \
+        .sensors_3d(file_path="config/sensor_3d.yaml")\
         .planning_pipelines(
             pipelines=["ompl"] 
         ) \

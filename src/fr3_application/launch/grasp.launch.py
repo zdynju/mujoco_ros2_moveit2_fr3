@@ -29,7 +29,7 @@ def generate_launch_description():
     # ------------------------------------------------------------
     grasp_node = Node(
         package="fr3_application",
-        executable="grasp",          # setup.py 里的 entry point
+        executable="fr3grasp",          # setup.py 里的 entry point
         name="moveit_py",
         output="screen",
         parameters=[
