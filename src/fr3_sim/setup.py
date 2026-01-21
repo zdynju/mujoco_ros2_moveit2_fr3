@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'mujoco_obstacle_pub = fr3_sim.mujoco_obstacle_pub:main',
+            'camera_tf = fr3_sim.camera_tf:main'
         ],
     },
 )

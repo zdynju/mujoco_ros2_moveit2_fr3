@@ -12,9 +12,18 @@ from launch.actions import ExecuteProcess, TimerAction
 def generate_launch_description():
     package_name = 'fr3_sim'
     
-    # 获取参数
+    # 1. 获取参数配置
+    # 这一步将 use_sim_time 变成了一个可以在后续传给 Node 的变量
     use_sim_time = LaunchConfiguration('use_sim_time')
     
+    # 2. 声明启动参数 (给 launch 命令行用的)
+    declare_use_sim_time = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo/MuJoCo) clock if true'
+    )
+
+    # 3. 路径配置
     # 模型文件 (URDF/Xacro)
     xacro_file = PathJoinSubstitution([
         FindPackageShare(package_name), 'urdf', 'fr3.urdf.xacro'
@@ -25,26 +34,28 @@ def generate_launch_description():
         FindPackageShare(package_name), 'config', 'ros2_controllers.yaml'
     ])
 
-    # RViz 配置文件 (如果有的话，没有就用默认空配置)
-    rviz_config = PathJoinSubstitution([FindPackageShare(package_name), 'rviz', 'sim.rviz'])
-
-    # 3. 声明启动参数
-    declare_use_sim_time = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation (Gazebo/MuJoCo) clock if true'
-    )
-
     # 4. 解析 Xacro 得到 Robot Description
-    # 注意：这里假设你的 fr3.urdf.xacro 能够通过 xacro 命令直接编译
     robot_description_content = Command(
         [FindExecutable(name='xacro'), ' ', xacro_file]
     )
-    robot_description = {'robot_description': ParameterValue(robot_description_content,value_type=str)}
+    robot_description = {'robot_description': ParameterValue(robot_description_content, value_type=str)}
 
+    # ==========================================================
     # 5. 节点定义
-    
-    # A. Robot State Publisher (负责发布静态 TF)
+    # ==========================================================
+
+    # 【关键】动态 TF 发布节点
+    # 注意：executable='camera_tf' 必须和你 setup.py 里 entry_points 的名字一致
+    dynamic_tf_node = Node(
+        package='fr3_sim',
+        executable='camera_tf', 
+        name='world_camera_tf_dynamic',
+        # 这里把 launch 里的 use_sim_time=true 传给了 Python 节点
+        parameters=[{'use_sim_time': use_sim_time}],   
+        output='screen'
+    )
+
+    # A. Robot State Publisher (负责发布静态 TF 和 URDF)
     node_robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -53,7 +64,6 @@ def generate_launch_description():
     )
 
     # B. MuJoCo ROS2 Control Node (核心仿真节点)
-    # 这个节点既跑物理引擎，又作为 Controller Manager
     node_mujoco = Node(
         package='mujoco_ros2_control',
         executable='ros2_control_node',
@@ -61,12 +71,11 @@ def generate_launch_description():
         parameters=[
             robot_description,
             {'use_sim_time': use_sim_time},
-            controller_config  # 传入控制器参数
+            controller_config
         ]
     )
 
-
-    # C. 启动 Joint State Broadcaster (负责发布 /joint_states)
+    # C. 启动 Joint State Broadcaster
     spawn_joint_state_broadcaster = Node(
         package='controller_manager',
         executable='spawner',
@@ -74,9 +83,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # D. 启动手臂控制器 (注意：名字必须和你的 yaml 文件里的一致！)
-    # 假设你的 yaml 里叫 "fr3_arm_controller" 或 "joint_trajectory_controller"
-    # 请根据你的 ros2_controllers.yaml 修改下面的名字
+    # D. 启动手臂控制器
     spawn_arm_controller = Node(
         package='controller_manager',
         executable='spawner',
@@ -84,6 +91,7 @@ def generate_launch_description():
         output='screen'
     )
 
+    # E. 启动夹爪控制器
     spawn_hand_controller = Node(
         package='controller_manager',
         executable='spawner',
@@ -91,36 +99,22 @@ def generate_launch_description():
         output='screen'
     )
 
+    # F. 事件处理器：等 joint_state_broadcaster 启动后再启动控制器
     delay_arm_controller_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=spawn_joint_state_broadcaster,
-            on_exit=[spawn_arm_controller,spawn_hand_controller],
+            on_exit=[spawn_arm_controller, spawn_hand_controller],
         )
     )
 
-# # E. 启动障碍物发布节点
-#     obstacle_add_node = Node(
-#         package='fr3_sim',
-#         executable='mujoco_obstacle_pub', # 必须和 setup.py console_scripts 里的名字一样
-#         name='mujoco_obstacle_pub', # 给节点起个好听的名字
-#         output='screen',
-#         parameters=[{
-#             'mujoco_model_path': mujoco_scene_file, 
-            
-#             'obstacles': ["obstacle","table"],
-            
-#             'targets': ['hoop_object'],
-            
-#             'frame_id': 'base',
-#             'update_rate': 1.0
-#         }]
-#     )
+    # ==========================================================
+    # 6. 返回 Launch 描述
+    # ==========================================================
     return LaunchDescription([
-        declare_use_sim_time,
-        node_robot_state_publisher,
-        node_mujoco,
-        spawn_joint_state_broadcaster,
-        delay_arm_controller_spawner,
-        # obstacle_add_node
-        # node_rviz
+        declare_use_sim_time,          # 1. 先声明参数
+        node_robot_state_publisher,    # 2. 发布机器人模型
+        node_mujoco,                   # 3. 启动物理引擎
+        dynamic_tf_node,               # 4. 启动动态相机 TF (解决 filtered_points 问题)
+        spawn_joint_state_broadcaster, # 5. 启动关节状态广播
+        delay_arm_controller_spawner,  # 6. 启动控制器
     ])

@@ -6,9 +6,12 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     moveit_pkg_name = "fr3_moveit_config"
 
-    urdf_file_path = os.path.join(
-        get_package_share_directory("franka_description"),
-        "robots", "fr3", "fr3.urdf.xacro"
+    world_base_static_tf = Node(
+    package="tf2_ros",
+    executable="static_transform_publisher",
+    name="world_base_static_transform_publisher",
+    output="log",
+    arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base"],
     )
 
     moveit_config = (
@@ -38,15 +41,7 @@ def generate_launch_description():
         ],
     )
 
-    # run_move_group_node = Node(
-    #     package="moveit_ros_move_group",
-    #     executable="move_group",
-    #     output="screen",
-    #     parameters=[
-    #         moveit_config.to_dict(), 
-    #         {"use_sim_time": True},  
-    #     ],
-    # )
+
     run_rviz_node = Node(
         package="rviz2",
         executable="rviz2",
@@ -60,6 +55,7 @@ def generate_launch_description():
         ],
     )
     return LaunchDescription([
+        world_base_static_tf,
         grasp_node,
         # run_move_group_node,
         run_rviz_node

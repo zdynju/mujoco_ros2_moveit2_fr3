@@ -14,6 +14,15 @@ def generate_launch_description():
         "urdf", "fr3.urdf.xacro"
     )
 
+    # world_base_static_tf = Node(
+    # package="tf2_ros",
+    # executable="static_transform_publisher",
+    # name="world_base_static_transform_publisher",
+    # output="log",
+    # # 意思是：world 是父，base 是子，它们重合
+    # arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base"],
+    # )
+
     moveit_config = MoveItConfigsBuilder("fr3", package_name=moveit_pkg_name) \
         .robot_description(
             file_path=urdf_file_path
@@ -27,6 +36,7 @@ def generate_launch_description():
             pipelines=["ompl"] 
         ) \
         .to_moveit_configs()
+
 
 
     run_move_group_node = Node(
@@ -57,6 +67,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        # world_base_static_tf,
         run_move_group_node,
         run_rviz_node,
     ])
