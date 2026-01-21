@@ -66,7 +66,6 @@ class PointCloudGenerator(Node):
         # 组合成 (N, 3) 的数组
         points = np.stack((x, y, z_valid), axis=-1).astype(np.float32)
 
-        # 直接使用 numpy 数组创建 PointCloud2，避免使用 .tolist() 导致的 CPU 剧烈震荡
         pc_msg = pc2.create_cloud_xyz32(header, points)
         self.get_logger().info(f"Published pointcloud, num points: {points.shape[0]}")
 
