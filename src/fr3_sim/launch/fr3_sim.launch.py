@@ -54,6 +54,7 @@ def generate_launch_description():
     name="world_base_static_transform_publisher",
     output="log",
     arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base"],
+    parameters=[{'use_sim_time':use_sim_time}]
     )
     # A. Robot State Publisher (负责发布静态 TF 和 URDF)
     node_robot_state_publisher = Node(
@@ -113,9 +114,8 @@ def generate_launch_description():
     return LaunchDescription([
         declare_use_sim_time,          # 1. 先声明参数
         node_robot_state_publisher,    # 2. 发布机器人模型
-        node_mujoco,                  
-        world_base_static_tf, # 3. 启动物理引擎
-        dynamic_tf_node,               # 4. 启动动态相机 TF (解决 filtered_points 问题)
+        node_mujoco,                   # 3. 启动物理引擎     
+        world_base_static_tf,         
         spawn_joint_state_broadcaster, # 5. 启动关节状态广播
         delay_arm_controller_spawner,  # 6. 启动控制器
     ])

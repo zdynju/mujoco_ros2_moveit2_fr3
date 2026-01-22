@@ -8,7 +8,9 @@
       <rgba haze="0.15 0.25 0.35 1"/>
       <global azimuth="120" elevation="-20"/>
   </visual>
-
+    <default>
+        <joint armature="0.1" damping="1.0" frictionloss="0.1"/>
+    </default>
   <asset>
     <mesh name="link0" file="robot_arms/fr3/collision/link0.stl"/>
     <mesh name="link1" file="robot_arms/fr3/collision/link1.stl"/>
@@ -149,7 +151,7 @@
       group="0"/>
   </body>
 
-  <body name="table" pos="0 -0.4 0.2">
+  <body name="table" pos="0 -0.5 0.2">
     <geom
       name="table_geom"
       type="box"
@@ -190,7 +192,7 @@
     <position
       name="fr3_joint1"
       joint="fr3_joint1"
-      kp="3000"
+      kp="1000"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-200 200"/>
@@ -198,7 +200,7 @@
     <position
       name="fr3_joint2"
       joint="fr3_joint2"
-      kp="3000"
+      kp="1000"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-200 200"/>
@@ -206,7 +208,7 @@
     <position
       name="fr3_joint3"
       joint="fr3_joint3"
-      kp="2500"
+      kp="1000"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-150 150"/>
@@ -214,7 +216,7 @@
     <position
       name="fr3_joint4"
       joint="fr3_joint4"
-      kp="2000"
+      kp="1000"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-120 120"/>
@@ -222,7 +224,7 @@
     <position
       name="fr3_joint5"
       joint="fr3_joint5"
-      kp="1500"
+      kp="1000"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-80 80"/>

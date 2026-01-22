@@ -28,17 +28,14 @@ def generate_launch_description():
     )
 
 
-    # ------------------------------------------------------------s
-    # 2. 启动你的 MoveItPy 节点
-    # ------------------------------------------------------------
     grasp_node = Node(
         package="fr3_application",
-        executable="fr3grasp",          # setup.py 里的 entry point
+        executable="fr3grasp",       
         name="moveit_py",
         output="screen",
         parameters=[
             moveit_config.to_dict(),
-            {"use_sim_time": True}  # ⭐ 关键：参数在 launch 阶段注入
+            {"use_sim_time": True} 
         ],
     )
 
@@ -52,11 +49,10 @@ def generate_launch_description():
             moveit_config.package_path, "rviz", "rviz.rviz")],
         parameters=[
             moveit_config.to_dict(),
-            {"use_sim_time": True}, # 同上，保持时间同步
+            {"use_sim_time": True}, 
         ],
     )
     return LaunchDescription([
         grasp_node,
-        # run_move_group_node,
         run_rviz_node
     ])

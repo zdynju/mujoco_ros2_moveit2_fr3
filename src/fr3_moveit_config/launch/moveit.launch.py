@@ -45,7 +45,6 @@ def generate_launch_description():
         output="screen",
         parameters=[
             moveit_config.to_dict(), 
-            
             {"use_sim_time": True},  
         ],
     )

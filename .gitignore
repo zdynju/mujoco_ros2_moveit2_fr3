@@ -15,3 +15,7 @@ token
 
 MUJOCO_LOG.TXT
 
+src/fr3_control
+src/franka_msgs
+
+frames*

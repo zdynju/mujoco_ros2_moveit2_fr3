@@ -15,13 +15,13 @@ PLANNING_GROUP_HAND = "fr3_hand"
 LINK_EE = "fr3_link8"
 FRAME_BASE = "base"
 
-# 指定 Pilz 规划器，用于支持 LIN 和 PTP
 PIPELINE_PILZ = "pilz_industrial_motion_planner"
 
 class Fr3Grasper:
     def __init__(self, node_name="moveit_py_node"):
         # 初始化 MoveItPy
         self.fr3 = MoveItPy(node_name=node_name)
+        rc = rclpy.logging.get_logger("moveit_ros.perception").set_level(rclpy.logging.LoggingSeverity.DEBUG)
         self.logger = get_logger("fr3_grasper")
         
         # 获取规划组件
@@ -64,7 +64,7 @@ class Fr3Grasper:
         else:
             self.logger.error(f"[{description}] 规划失败")
             return False
-
+ 
     def move_ptp(self, position, rpy, description="PTP运动"):
         """点到点运动 (使用 Pilz PTP)"""
         self.arm.set_start_state_to_current_state()
@@ -76,8 +76,8 @@ class Fr3Grasper:
         # 配置参数
         params = PlanRequestParameters(self.fr3) # 显式指定 Pilz 管道
         params.planner_id = "PTP"
-        params.max_velocity_scaling_factor = 0.5
-        params.max_acceleration_scaling_factor = 0.5
+        params.max_velocity_scaling_factor = 0.4
+        params.max_acceleration_scaling_factor = 0.4
 
         return self.plan_and_execute(self.arm, single_plan_parameters=params, description=description)
 
@@ -89,7 +89,7 @@ class Fr3Grasper:
         self.arm.set_goal_state(pose_stamped_msg=pose_goal, pose_link=LINK_EE)
 
         # 配置参数
-        params = PlanRequestParameters(self.fr3 )# 显式指定 Pilz 管道
+        params = PlanRequestParameters(self.fr3)# 显式指定 Pilz 管道
         params.planner_id = "LIN"
         params.max_velocity_scaling_factor = 0.2  # 直线运动建议慢一点
 
@@ -144,7 +144,7 @@ class Fr3Grasper:
 
 def main():
     rclpy.init()
-    
+
     bot = Fr3Grasper()
     time.sleep(10.0) # 等待初始化
 
@@ -157,14 +157,14 @@ def main():
         
         if not bot.move_ptp(ready_pos, ready_rpy, "移动到预备点"):
             return
-
-        # # 2. 张开
-        # bot.control_gripper("open")
-
-        # # 3. 直线下降抓取
-        # grasp_pos = [0.5, 0.0, 0.12] # 略高于物体中心
-        # if not bot.move_lin(grasp_pos, ready_rpy, "直线下降"):
-        #     return
+        time.sleep(3)
+        # 2. 张开
+        bot.control_gripper("open")
+        time.sleep(3)
+        # # 3. 直线向前抓取
+        grasp_pos = [0.0, -0.4, 0.5] # 略高于物体中心
+        if not bot.move_lin(grasp_pos, ready_rpy, "直线接近"):
+            return
 
         # # 4. 逻辑附着 (MoveIt) + 物理抓取
         # bot.control_gripper("close")
