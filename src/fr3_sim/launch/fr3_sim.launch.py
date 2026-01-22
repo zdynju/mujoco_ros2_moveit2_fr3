@@ -46,14 +46,7 @@ def generate_launch_description():
 
     # 【关键】动态 TF 发布节点
     # 注意：executable='camera_tf' 必须和你 setup.py 里 entry_points 的名字一致
-    dynamic_tf_node = Node(
-        package='fr3_sim',
-        executable='camera_tf', 
-        name='world_camera_tf_dynamic',
-        # 这里把 launch 里的 use_sim_time=true 传给了 Python 节点
-        parameters=[{'use_sim_time': use_sim_time}],   
-        output='screen'
-    )
+    
     
     world_base_static_tf = Node(
     package="tf2_ros",
