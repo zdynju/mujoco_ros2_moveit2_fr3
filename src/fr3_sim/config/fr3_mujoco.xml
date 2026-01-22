@@ -140,7 +140,7 @@
       </body>
     </body>
     <!-- 障碍物 -->
-  <body name="obstacle" pos="0.375 -0.25 0.5">
+  <!-- <body name="obstacle" pos="0.375 -0.25 0.5">
     <geom
       name="obstacle_geom"
       type="box"
@@ -149,18 +149,44 @@
       contype="1" 
       conaffinity="1"
       group="0"/>
-  </body>
+  </body> -->
 
-  <body name="table" pos="0 -0.5 0.2">
+  <body name="table1" pos="0.4 -0.25 0.1">
     <geom
-      name="table_geom"
+      name="table1_geom"
       type="box"
-      size="0.05 0.05 0.2"
+      size="0.1 0.1 0.1"
       rgba="0 1 0 1"
       contype="1" 
       conaffinity="1"
        group="0" />
-      </body>
+      </body> 
+  <body name="table2" pos="0 -0.5 0.1">
+    <geom
+      name="table2_geom"
+      type="box"
+      size="0.1 0.1 0.1"
+      rgba="0 1 0 1"
+      contype="1" 
+      conaffinity="1"
+       group="0" />
+      </body> 
+<body name="target1" pos="0 -0.5 0.25">
+    <joint name="target_joint" type="free" damping="0.001"/>
+    <geom
+      name="target_geom"
+      type="box"
+      size="0.025 0.025 0.05"
+      rgba="0 0 1 1"
+      contype="1"
+      conaffinity="1"
+      group="0"
+      mass="0.1"
+      friction="1 0.01 0.001"
+      solimp="0.9 0.95 0.001" 
+      solref="0.02 1"/>
+  </body>
+
   <!-- <body name="hoop_object" pos="0.0 -0.25 0.21">
     <joint type="free" damping="0.1" armature="0.001"/>
     
@@ -192,7 +218,7 @@
     <position
       name="fr3_joint1"
       joint="fr3_joint1"
-      kp="1000"
+      kp="1500"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-200 200"/>
@@ -200,7 +226,7 @@
     <position
       name="fr3_joint2"
       joint="fr3_joint2"
-      kp="1000"
+      kp="1500"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-200 200"/>
@@ -208,7 +234,7 @@
     <position
       name="fr3_joint3"
       joint="fr3_joint3"
-      kp="1000"
+      kp="1500"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-150 150"/>
@@ -216,7 +242,7 @@
     <position
       name="fr3_joint4"
       joint="fr3_joint4"
-      kp="1000"
+      kp="1500"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-120 120"/>
@@ -224,7 +250,7 @@
     <position
       name="fr3_joint5"
       joint="fr3_joint5"
-      kp="1000"
+      kp="1500"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-80 80"/>
@@ -232,7 +258,7 @@
     <position
       name="fr3_joint6"
       joint="fr3_joint6"
-      kp="1000"
+      kp="1500"
       dampratio="2.0"
       ctrlrange="-3.14 3.14"
       forcerange="-60 60"/>

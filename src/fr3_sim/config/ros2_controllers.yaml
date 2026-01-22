@@ -12,7 +12,7 @@ controller_manager:
 
     # 3. 夹爪控制器
     fr3_hand_controller:
-      type: joint_trajectory_controller/JointTrajectoryController
+      type: position_controllers/GripperActionController
 
 fr3_arm_controller:
   ros__parameters:
@@ -34,12 +34,23 @@ fr3_arm_controller:
 
 fr3_hand_controller:
   ros__parameters:
-    joints:
-      - fr3_finger_joint1
-      # - fr3_finger_joint2
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
-      - velocity
+    type: position_controllers/GripperActionController
+
+    joint: fr3_finger_joint1
+
+    allow_stalling: true
+
+    # 4. 判定抓住了的参数
+    stall_velocity_threshold: 0.001 # 速度低于这个值认为停住了
+    stall_timeout: 1.0              # 停住 1 秒后发送 Success
+
+    # 目标误差容忍度
+    goal_tolerance: 0.01
+    
+    # 动作监视频率
+    action_monitor_rate: 20.0
+    
+    # 默认最大力 (如果 Action 不指定力，就用这个)
+    # 设为 0.0 可能导致没力气，建议给个默认值
+    max_effort: 50.0
 

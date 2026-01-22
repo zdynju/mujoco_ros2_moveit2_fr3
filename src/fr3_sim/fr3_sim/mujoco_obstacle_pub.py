@@ -21,10 +21,6 @@ class MujocoObstaclesPublisher(Node):
         )
 
         # 2. 声明 targets 参数，同样明确类型
-        self.declare_parameter(
-            'targets', 
-            rclpy.Parameter.Type.STRING_ARRAY
-        )
         self.declare_parameter('frame_id', 'world')
         # 频率：0.5 Hz
         self.declare_parameter('update_rate', 1.0) 
@@ -32,7 +28,6 @@ class MujocoObstaclesPublisher(Node):
         # 2. 读取参数
         model_path = self.get_parameter('mujoco_model_path').get_parameter_value().string_value
         self.obstacle_names = self.get_parameter('obstacles').get_parameter_value().string_array_value
-        self.target_names = self.get_parameter('targets').get_parameter_value().string_array_value
         self.frame_id = self.get_parameter('frame_id').get_parameter_value().string_value
         update_rate = self.get_parameter('update_rate').get_parameter_value().double_value
 
@@ -71,18 +66,16 @@ class MujocoObstaclesPublisher(Node):
             self.timer.destroy()  # 销毁定时器，不再执行
             return
         # 发布障碍物
-        self._process_list(self.obstacle_names, is_target=False)
+        self._process_list(self.obstacle_names)
         # 发布目标物
-        self._process_list(self.target_names, is_target=True)
         self.pub_count += 1
-    def _process_list(self, body_names, is_target):
+    def _process_list(self, body_names):
         for name in body_names:
             msg = self._create_collision_object_from_body(name)
             if msg:
                 self.pub.publish(msg)
-                role = "TARGET" if is_target else "OBSTACLE"
                 # debug 日志，防止刷屏
-                self.get_logger().debug(f"Published {role}: {name}")
+                self.get_logger().debug(f"Published  {name}")
 
     def _create_collision_object_from_body(self, body_name):
         try:

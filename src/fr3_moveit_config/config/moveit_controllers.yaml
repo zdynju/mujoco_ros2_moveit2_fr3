@@ -18,11 +18,18 @@ moveit_simple_controller_manager:
       - fr3_joint6
       - fr3_joint7
 
-  # 新增：夹爪控制器配置
-  fr3_hand_controller:
-    action_ns: follow_joint_trajectory
-    type: FollowJointTrajectory
-    default: true
-    joints:
-      - fr3_finger_joint1
-      # - fr3_finger_joint2
+fr3_hand_controller:
+  # 1. 动作命名空间变了
+  # GripperActionController 默认暴露的是 gripper_cmd
+  action_ns: gripper_cmd
+
+  # 2. 动作类型变了
+  # 必须告诉 MoveIt 发送 GripperCommand 消息，而不是 Trajectory 消息
+  type: GripperCommand
+
+  default: true
+  
+  # 3. 关节列表
+  # 只需要写主动关节 (Master Joint)
+  joints:
+    - fr3_finger_joint1

@@ -28,7 +28,9 @@ def generate_launch_description():
     xacro_file = PathJoinSubstitution([
         FindPackageShare(package_name), 'urdf', 'fr3.urdf.xacro'
     ])
-
+    mujoco_path = PathJoinSubstitution([
+        FindPackageShare(package_name),'config','fr3_mujoco.xml'
+    ])
     # 控制器配置文件 (YAML)
     controller_config = PathJoinSubstitution([
         FindPackageShare(package_name), 'config', 'ros2_controllers.yaml'
@@ -107,6 +109,24 @@ def generate_launch_description():
             on_exit=[spawn_arm_controller, spawn_hand_controller],
         )
     )
+    mujoco_publisher_node = Node(
+        package=package_name,
+        executable='mujoco_obstacle_pub',  # 对应 setup.py console_scripts 中的名称
+        name='mujoco_obstacles_publisher',
+        output='screen',
+        parameters=[{
+            'mujoco_model_path': mujoco_path,
+
+            'obstacles': ['target1',"table1","table2"],
+            
+            
+            # 选填：参考坐标系 (通常是 world 或 base_link)
+            'frame_id': 'base',
+            
+            # 选填：更新频率 (Hz)
+            'update_rate': 1.0
+        }]
+    )
 
     # ==========================================================
     # 6. 返回 Launch 描述
@@ -114,7 +134,8 @@ def generate_launch_description():
     return LaunchDescription([
         declare_use_sim_time,          # 1. 先声明参数
         node_robot_state_publisher,    # 2. 发布机器人模型
-        node_mujoco,                   # 3. 启动物理引擎     
+        node_mujoco,       
+        mujoco_publisher_node,            # 3. 启动物理引擎     
         world_base_static_tf,         
         spawn_joint_state_broadcaster, # 5. 启动关节状态广播
         delay_arm_controller_spawner,  # 6. 启动控制器

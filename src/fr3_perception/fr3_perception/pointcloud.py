@@ -39,6 +39,7 @@ class PointCloudGenerator(Node):
         # 将消息转换为 OpenCV 格式
         # 注意：使用 passthrough 以保留原始深度单位（通常为米）
         self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = "camera1_mujoco_frame"
         # 将当前消息的 header 传给生成函数，确保时间戳完全同步
         self.generate_pc(msg.header)
