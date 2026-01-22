@@ -66,6 +66,10 @@ ros2 launch fr3_sim fr3_sim.launch.py use_sim_time:=true
 ```bash
 ros2 launch fr3_application grasp.launch.py
 ```
+#### (option)
+```bash
+ros2 launch fr3_moveit_config moveit.launch.py
+```
 ###  参考引用 (References)
 
 本项目使用了以下开源项目作为基础组件，特此致谢：
