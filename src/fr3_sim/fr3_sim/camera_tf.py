@@ -23,7 +23,7 @@ class CameraTFBroadcaster(Node):
 
     def broadcast_timer_callback(self):
         t = TransformStamped()
-        print("update_camera_tf")
+        # print("update_camera_tf")
         # 【核心】使用当前节点时间（仿真时间）作为时间戳
         t.header.stamp = self.get_clock().now().to_msg()
         

@@ -67,7 +67,7 @@ class PointCloudGenerator(Node):
         points = np.stack((x, y, z_valid), axis=-1).astype(np.float32)
 
         pc_msg = pc2.create_cloud_xyz32(header, points)
-        self.get_logger().info(f"Published pointcloud, num points: {points.shape[0]}")
+        # self.get_logger().info(f"Published pointcloud, num points: {points.shape[0]}")
 
         # 发布
         self.pc_pub.publish(pc_msg)

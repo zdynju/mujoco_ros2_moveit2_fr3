@@ -152,7 +152,7 @@ def main():
 
         # 1. 移动到预备点
 
-        ready_rpy = [math.radians(90), 0.0, math.radians(180)] 
+        ready_rpy = [math.radians(90), math.radians(90),0.0]  
         ready_pos = [0, -0.3, 0.5]
         
         if not bot.move_ptp(ready_pos, ready_rpy, "移动到预备点"):
